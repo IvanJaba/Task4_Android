@@ -2,7 +2,6 @@
 
 import kotlin.math.abs
 
-// Класс, представляющий шахматную фигуру
 fun main() {
     val a = 5
     val b = -10
@@ -12,8 +11,35 @@ fun main() {
 
     println("Абсолютное значение $a: $absA")
     println("Абсолютное значение $b: $absB")
+
+    val pieces = listOf(
+        ChessPiece(PieceType.PAWN, PieceColor.WHITE, 2, 2),
+        ChessPiece(PieceType.KNIGHT, PieceColor.WHITE, 1, 0),
+        ChessPiece(PieceType.BISHOP, PieceColor.BLACK, 3, 5),
+        ChessPiece(PieceType.ROOK, PieceColor.WHITE, 0, 0),
+        ChessPiece(PieceType.QUEEN, PieceColor.BLACK, 4, 4),
+        ChessPiece(PieceType.KING, PieceColor.WHITE, 4, 0)
+    )
+
+    for (piece in pieces) {
+        println("\nФигура: ${piece.color} ${piece.type} на клетке (${piece.x}, ${piece.y})")
+        println("Возможные ходы:")
+        val possibleMoves = piece.validMoves()
+        for ((x, y) in possibleMoves) {
+            println("($x, $y)")
+        }
+        println("Интерфейс фигуры:")
+        showPieceInterface(piece)
+    }
 }
 
+enum class PieceType {
+    PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING
+}
+
+enum class PieceColor {
+    WHITE, BLACK
+}
 
 data class ChessPiece(
     val type: PieceType, // Тип фигуры
@@ -22,72 +48,88 @@ data class ChessPiece(
     val y: Int // Координата y на шахматной доске
 )
 
-// Перечисление, описывающее типы шахматных фигур
-enum class PieceType {
-    PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING
+interface ChessPieceInterface {
+    fun showInfo() // Метод для отображения информации о фигуре
 }
 
-// Перечисление, описывающее цвета шахматных фигур
-enum class PieceColor {
-    WHITE, BLACK
-}
-
-// Функция, сортирующая список шахматных фигур по типу, а затем по цвету
-fun sortPiecesByRank(pieces: List<ChessPiece>): List<ChessPiece> {
-    return pieces.sortedWith(
-        compareBy(
-            { it.type },
-            { it.color }
-        )
-    )
-}
-
-// Функция, возвращающая список шахматных фигур заданного цвета
-fun findPiecesByColor(pieces: List<ChessPiece>, color: PieceColor): List<ChessPiece> {
-    return pieces.filter { it.color == color }
-}
-
-// Функция, возвращающая список шахматных фигур, угрожающих заданной клетке
-fun findPiecesThreatening(pieces: List<ChessPiece>, x: Int, y: Int): List<ChessPiece> {
-    return pieces.filter { isThreateningSquare(it, x, y) }
-}
-
-// Функция, возвращающая список шахматных фигур, не угрожающих заданной клетке
-fun findPiecesNotThreatening(pieces: List<ChessPiece>, x: Int, y: Int): List<ChessPiece> {
-    return pieces.filter { !isThreateningSquare(it, x, y) }
-}
-
-// Вспомогательная функция, определяющая, угрожает ли фигура заданной клетке
-private fun isThreateningSquare(piece: ChessPiece, x: Int, y: Int): Boolean {
-    when (piece.type) {
+fun ChessPiece.validMoves(): List<Pair<Int, Int>> {
+    return when (type) {
         PieceType.PAWN -> {
-            val isWhite = piece.color == PieceColor.WHITE
-            val forwardDirection = if (isWhite) 1 else -1
-            return (piece.x == x && piece.y + forwardDirection == y) ||
-                    (abs(piece.x - x) == 1 && piece.y + forwardDirection == y)
+            // Логика для ходов пешки
+            listOf(Pair(x + 1, y), Pair(x - 1, y))
         }
         PieceType.KNIGHT -> {
-            val dxAbs = abs(piece.x - x)
-            val dyAbs = abs(piece.y - y)
-            return (dxAbs == 2 && dyAbs == 1) || (dxAbs == 1 && dyAbs == 2)
+            // Логика для ходов коня
+            listOf(Pair(x + 2, y + 1), Pair(x - 2, y - 1))
         }
         PieceType.BISHOP -> {
-            val dx = x - piece.x
-            val dy = y - piece.y
-            return abs(dx) == abs(dy)
+            // Логика для ходов слона
+            listOf(Pair(x + 1, y + 1), Pair(x - 1, y - 1))
         }
         PieceType.ROOK -> {
-            return piece.x == x || piece.y == y
+            // Логика для ходов ладьи
+            listOf(Pair(x, y + 1), Pair(x, y - 1))
         }
         PieceType.QUEEN -> {
-            val dx = x - piece.x
-            val dy = y - piece.y
-            return abs(dx) == abs(dy) || piece.x == x || piece.y == y
+            // Логика для ходов королевы
+            listOf(Pair(x + 1, y + 1), Pair(x - 1, y - 1))
         }
         PieceType.KING -> {
-            val dx = abs(x - piece.x)
-            val dy = abs(y - piece.y)
-            return (dx == 1 && dy <= 1) || (dx <= 1 && dy == 1)
+            // Логика для ходов короля
+            listOf(Pair(x + 1, y), Pair(x - 1, y))
         }
+    }
+}
+
+fun showPieceInterface(piece: ChessPiece) {
+    when (piece.type) {
+        PieceType.PAWN -> PawnInterface(piece.color, piece.x, piece.y).showInfo()
+        PieceType.KNIGHT -> KnightInterface(piece.color, piece.x, piece.y).showInfo()
+        PieceType.BISHOP -> BishopInterface(piece.color, piece.x, piece.y).showInfo()
+        PieceType.ROOK -> RookInterface(piece.color, piece.x, piece.y).showInfo()
+        PieceType.QUEEN -> QueenInterface(piece.color, piece.x, piece.y).showInfo()
+        PieceType.KING -> KingInterface(piece.color, piece.x, piece.y).showInfo()
+    }
+}
+
+class PawnInterface(private val color: PieceColor, private val x: Int, private val y: Int) : ChessPieceInterface {
+    override fun showInfo() {
+        println("Пешка $color на клетке ($x, $y)")
+        println("Интерфейс: Описание пешки")
+    }
+}
+
+class KnightInterface(private val color: PieceColor, private val x: Int, private val y: Int) : ChessPieceInterface {
+    override fun showInfo() {
+        println("Конь $color на клетке ($x, $y)")
+        println("Интерфейс: Описание коня")
+    }
+}
+
+class BishopInterface(private val color: PieceColor, private val x: Int, private val y: Int) : ChessPieceInterface {
+    override fun showInfo() {
+        println("Слон $color на клетке ($x, $y)")
+        println("Интерфейс: Описание слона")
+    }
+}
+
+class RookInterface(private val color: PieceColor, private val x: Int, private val y: Int) : ChessPieceInterface {
+    override fun showInfo() {
+        println("Ладья $color на клетке ($x, $y)")
+        println("Интерфейс: Описание ладьи")
+    }
+}
+
+class QueenInterface(private val color: PieceColor, private val x: Int, private val y: Int) : ChessPieceInterface {
+    override fun showInfo() {
+        println("Королева $color на клетке ($x, $y)")
+        println("Интерфейс: Описание королевы")
+    }
+}
+
+class KingInterface(private val color: PieceColor, private val x: Int, private val y: Int) : ChessPieceInterface {
+    override fun showInfo() {
+        println("Король $color на клетке ($x, $y)")
+        println("Интерфейс: Описание короля")
     }
 }
